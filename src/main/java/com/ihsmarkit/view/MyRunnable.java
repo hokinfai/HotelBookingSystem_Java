@@ -12,7 +12,7 @@ import com.ihsmarkit.controller.BookingSystem;
  * This class is intended to test if the booking system is thread safe 
  */
 public class MyRunnable implements Runnable {
-	BookingSystem bm = new BookingSystem();
+	BookingManager bm = new BookingSystem();
 	Date today;
 	Date tmr;
 	String guest;
@@ -27,25 +27,18 @@ public class MyRunnable implements Runnable {
 			String threadName = Thread.currentThread().getName();
 			tmr = new SimpleDateFormat("yyyy-MM-dd").parse("2012-05-05");
 			today = new SimpleDateFormat("yyyy-MM-dd").parse("2012-05-04");
-
-			// System.out.println(threadName + " 101(1) " +
-			// bm.isRoomAvailable(101, today) + " " + today);
+			System.out.println(threadName + " 101(1) " + bm.isRoomAvailable(101, today) + " " + today);
 			bm.addBooking(guest, 101, today);
+			System.out.println(threadName + " 101(2) " + bm.isRoomAvailable(101, today) + " " + today);
 			bm.addBooking(guest, 101, today);
-			// System.out.println(threadName + " 101(2) " +
-			// bm.isRoomAvailable(101, today) + " " + today);
-
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		System.out.println("the second part");
-		bm.printGuest(101, today);
 		// Part II
-		// Iterable<Integer> avRoom = bm.getAvailableRooms(today);
-		// Iterator<Integer> it = avRoom.iterator();
-		// while (it.hasNext()) {
-		// System.out.println(Thread.currentThread().getName() + " " +
-		// it.next());
-		// }
+		Iterable<Integer> avRoom = bm.getAvailableRooms(today);
+		Iterator<Integer> it = avRoom.iterator();
+		while (it.hasNext()) {
+			System.out.println(Thread.currentThread().getName() + " " + it.next());
+		}
 	}
 }

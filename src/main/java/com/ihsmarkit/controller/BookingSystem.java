@@ -32,8 +32,7 @@ public class BookingSystem implements BookingManager {
 	}
 
 	/*
-	 * This methods is marked as synchronized as they are going to see the
-	 * modified data or modify the bookingDatabase.
+	 * This methods is going to see if the room is still available
 	 */
 	public boolean isRoomAvailable(Integer room, Date date) {
 		if (bookingDatabase.containsKey(new Booking(room, date))) {
@@ -43,17 +42,18 @@ public class BookingSystem implements BookingManager {
 	}
 
 	/*
-	 * this method needs to be synchronized if more than one threads will be
-	 * able to change/modify the critical section (adding booking into the
-	 * concurrenthashmap).
+	 * put operation of concurrentHashMap is not locked, which means while one
+	 * thread is putting value, other thread's get() call can still return null
+	 * resulting in one thread overriding value inserted by other thread. Using
+	 * synchronized block will make it thread-safe but that will only make the
+	 * code single threaded. ConcurrentHashMap provides putIfAbsent(key, value)
+	 * which does same thing but atomically and thus eliminates above race
+	 * condition.
 	 */
 	public void addBooking(String guest, Integer room, Date date) {
-		boolean available = isRoomAvailable(room, date);
-		if (available) {
-			synchronized (bookingDatabase) {
-				bookingDatabase.put(new Booking(room, date), guest);
-				System.out.println(Thread.currentThread().getName() + "\t" + guest + " Room booked Successfully");
-			}
+		Booking newBooking = new Booking(room, date);
+		if (bookingDatabase.get(newBooking) == null) {
+			bookingDatabase.putIfAbsent(newBooking, guest);
 		} else {
 			try {
 				throw new DuplicateBookingException(
@@ -62,10 +62,6 @@ public class BookingSystem implements BookingManager {
 				System.err.println(e);
 			}
 		}
-	}
-
-	public void printGuest(Integer room, Date date) {
-		System.out.println(bookingDatabase.get(new Booking(room, date)));
 	}
 
 	/*
