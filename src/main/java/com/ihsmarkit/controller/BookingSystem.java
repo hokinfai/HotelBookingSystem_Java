@@ -36,12 +36,10 @@ public class BookingSystem implements BookingManager {
 	 * modified data or modify the bookingDatabase.
 	 */
 	public boolean isRoomAvailable(Integer room, Date date) {
-		synchronized (bookingDatabase) {
-			if (bookingDatabase.containsKey(new Booking(room, date))) {
-				return false;
-			}
-			return true;
+		if (bookingDatabase.containsKey(new Booking(room, date))) {
+			return false;
 		}
+		return true;
 	}
 
 	/*
@@ -50,20 +48,24 @@ public class BookingSystem implements BookingManager {
 	 * concurrenthashmap).
 	 */
 	public void addBooking(String guest, Integer room, Date date) {
-		synchronized (bookingDatabase) {
-			boolean available = isRoomAvailable(room, date);
-			if (available) {
-				System.out.println("booking added by " + Thread.currentThread().getName() + date);
-				Booking newBooking = new Booking(room, date);
-				bookingDatabase.put(newBooking, guest);
-			} else {
-				try {
-					throw new DuplicateBookingException(Thread.currentThread().getName() + " Room booked already");
-				} catch (DuplicateBookingException e) {
-					System.err.println(e);
-				}
+		boolean available = isRoomAvailable(room, date);
+		if (available) {
+			synchronized (bookingDatabase) {
+				bookingDatabase.put(new Booking(room, date), guest);
+				System.out.println(Thread.currentThread().getName() + "\t" + guest + " Room booked Successfully");
+			}
+		} else {
+			try {
+				throw new DuplicateBookingException(
+						Thread.currentThread().getName() + "\t" + guest + " Room booked already");
+			} catch (DuplicateBookingException e) {
+				System.err.println(e);
 			}
 		}
+	}
+
+	public void printGuest(Integer room, Date date) {
+		System.out.println(bookingDatabase.get(new Booking(room, date)));
 	}
 
 	/*
